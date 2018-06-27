@@ -44,7 +44,10 @@ add model vehicle value =
     let
         addVehicles v =
             if v.id == vehicle.id then
-                { v | count = vehicle.count + value }
+                if value < 0 && vehicle.count+value < 0 then
+                    { v | count = 0 }
+                else
+                    { v | count = vehicle.count + value }
             else
                 v
         updatedVehicles =
