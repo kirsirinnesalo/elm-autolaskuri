@@ -10,12 +10,7 @@ import Counters.View exposing (viewCounters)
 view : Model -> Html Msg
 view model =
     div [ class "main" ]
-        [ div [ class "nav" ]
-            [ button [ onClick SaveState ] [ text "Tallenna" ]
-            , button [ onClick CreateCounter ] [ text "Uusi laskuri" ]
-            ]
-        , h1 [] [ text "Autolaskuri" ]
+        [ h1 [] [ text "Autolaskuri" ]
         , viewCounters model.counters model
-        , div [ class "footer" ]
-            [ text "2018 © Kirsi Rinnesalo" ]
+        , div [ class "footer" ] [ text "2018 © Kirsi Rinnesalo" ]
         ]

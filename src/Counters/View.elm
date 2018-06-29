@@ -30,7 +30,14 @@ maybeList response model =
 list : List Counter -> Model -> Html Msg
 list counters model =
     div [ class "counters" ]
-        (List.map (viewCounter model.editCounterId) counters)
+        ( List.append
+            (List.map (viewCounter model.editCounterId) counters)
+            [ fieldset [ class "counter add-new-counter" ]
+                [ legend [] [ text "Lisää uusi" ]
+                , button [ onClick CreateCounter ] [ text "+" ]
+                ]
+            ]
+        )
 
 viewCounter : CounterId -> Counter -> Html Msg
 viewCounter editCounterId counter =
