@@ -26,6 +26,17 @@ And then run it
 node api.js
 ```
 
+### db.json
+```
+{
+  "counters" : [
+    { "id": 1, "name": "Henkilöauto", "count": 0 },
+    { "id": 2, "name": "Kuorma-auto", "count": 0 },
+    { "id": 3, "name": "Linja-auto", "count": 0 }
+  ]
+}
+```
+
 ## Webpack
 
 With [Webpack](https://webpack.js.org/) we can get more support for JavaScript 
