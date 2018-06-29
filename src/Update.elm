@@ -1,67 +1,150 @@
 module Update exposing (..)
 
 import Msgs exposing (..)
-import Models exposing (Model, Vehicle, VehicleId)
-import RemoteData exposing (map)
-import RemoteData exposing (WebData)
+import Models exposing (Model, Counter, CounterId, newCounter)
+import RemoteData exposing (map, WebData)
+import Commands
+    exposing
+        ( focusOnEditCounterCmd
+        , fetchCountersCmd
+        , saveCounterCmd
+        , createNewCounterCmd
+        , deleteCounterCmd)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        OnFetchVehicles response ->
-            ( { model | vehicles = response }, Cmd.none )
+        NoOp ->
+            ( model, Cmd.none )
 
-        Reset vehicleId ->
+        OnFetchCounters response ->
+            ( { model | counters = response }, Cmd.none )
+
+        Reset id ->
             let
-                updatedVehicles =
-                    updateCount vehicleId 0 model
+                updatedCounters =
+                    updateCount id 0 model
             in
-                ( { model | vehicles = updatedVehicles }, Cmd.none )
+                ( { model | counters = updatedCounters }, Cmd.none )
 
-        Increase vehicleId ->
+        Increase counter ->
             let
-                increasedVehicles =
-                    add vehicleId 1 model
+                updatedCounters =
+                    updateCount counter.id (inc counter 1) model
             in
-                ( { model | vehicles = increasedVehicles }, Cmd.none)
+                ( { model | counters = updatedCounters }, Cmd.none )
 
-        Decrease vehicleId ->
+        Decrease counter ->
             let
-                decreasedVehicles =
-                    add vehicleId -1 model
+                updatedCounters =
+                    updateCount counter.id (inc counter -1) model
             in
-                ( { model | vehicles = decreasedVehicles }, Cmd.none)
+                ( { model | counters = updatedCounters }, Cmd.none )
 
-add : VehicleId -> Int -> Model -> WebData (List Vehicle)
-add vehicleId value model =
-    let
-        addVehicle vehicle =
-            if vehicle.id == vehicleId then
-                if value < 0 && vehicle.count+value < 0 then
-                    { vehicle | count = 0 }
+        EnableEditing counter ->
+            ( toggleEditing model counter, focusOnEditCounterCmd )
+
+        EditName counter newName ->
+            let
+                updatedCounter =
+                    { counter | name = newName }
+                toggledModel =
+                    toggleEditing model counter
+            in
+                if String.trim newName == "" then
+                    ( toggledModel, Cmd.none )
                 else
-                    { vehicle | count = vehicle.count + value }
-            else
-                vehicle
-        addVehicles vehicles =
-            List.map addVehicle vehicles
-    in
-        RemoteData.map addVehicles model.vehicles
+                    ( toggledModel, saveCounterCmd updatedCounter )
 
-updateCount : VehicleId -> Int -> Model -> WebData (List Vehicle)
-updateCount vehicleId newValue model =
+        SaveState ->
+            ( model, Cmd.none )
+
+        CreateCounter ->
+            ( model, createNewCounterCmd (newCounter -1 "Auto") )
+
+        CounterCreated (Ok counter) ->
+            ( toggleEditing
+                { model | counters = appendCounter counter model.counters }
+                counter
+            , focusOnEditCounterCmd
+            )
+
+        CounterCreated (Err error) ->
+            ( model, Cmd.none )
+
+        Delete id ->
+            let
+                filterIdFrom counters =
+                    List.filter (\ counter -> counter.id /= id) counters
+            in
+                ( { model | counters = RemoteData.map filterIdFrom model.counters }
+                , deleteCounterCmd id)
+
+        CounterDeleted _ ->
+            (model, fetchCountersCmd)
+
+        OnCounterSave (Ok counter) ->
+            ( saveCounter model counter, Cmd.none )
+
+        OnCounterSave (Err error) ->
+            ( model, Cmd.none )
+
+
+toggleEditing : Model -> Counter -> Model
+toggleEditing model counter =
+    if model.editCounterId == counter.id then
+        { model | editCounterId = -1 }
+    else
+        { model | editCounterId = counter.id }
+
+inc : Counter -> Int -> Int
+inc counter amount =
+    if amount < 0 && counter.count + amount < 0 then
+        0
+    else
+        counter.count + amount
+
+updateCount : CounterId -> Int -> Model -> WebData (List Counter)
+updateCount id newValue model =
     let
-        updateVehicle vehicle =
-            if vehicle.id == vehicleId then
+        updateCounter counter =
+            if counter.id == id then
                 if newValue < 0 then
-                    { vehicle | count = 0}
+                    { counter | count = 0}
                 else
-                    { vehicle | count = newValue }
+                    { counter | count = newValue }
             else
-                vehicle
+                counter
 
-        updateVehicles vehicles =
-            List.map updateVehicle vehicles
+        updateCounters counters =
+            List.map updateCounter counters
     in
-        RemoteData.map updateVehicles model.vehicles
+        RemoteData.map updateCounters model.counters
+
+saveCounter : Model -> Counter -> Model
+saveCounter model counter =
+    let
+        pick current =
+            if counter.id == current.id then
+                counter
+            else
+                current
+
+        updateCounterList counters =
+            List.map pick counters
+
+        updatedCounters =
+            RemoteData.map updateCounterList model.counters
+    in
+        { model | counters = updatedCounters }
+
+appendCounter : Counter -> WebData (List Counter) -> WebData (List Counter)
+appendCounter newCounter counters =
+    let
+        appendCounter : List Counter -> List Counter
+        appendCounter listOfCounters =
+            List.append listOfCounters [ newCounter ]
+    in
+        RemoteData.map appendCounter counters
+
 

@@ -5,8 +5,7 @@ require('font-awesome/css/font-awesome.css');
 
 require('./index.html');
 
-var Elm = require('./Autolaskuri.elm');
+var Elm = require('./MainApp.elm');
 var mountNode = document.getElementById('main');
 
 var app = Elm.Main.embed(document.body);
-

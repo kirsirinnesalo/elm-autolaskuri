@@ -3,8 +3,10 @@
 _Autolaskuri_ is a Finnish word for car counter. It is a training project to 
 familiarize myself with Elm language.
 
-Idea is to calculate oncoming different vehicles: sedans, trucks, motorcycles, etc... 
-A new counter should be easily added, counter cannot get negative.
+Idea is to count oncoming different vehicles: sedans, trucks, motorcycles, etc... 
+
+* counter cannot get negative
+* editing counters (add, remove, change name)
 
 ## Backend
 
@@ -37,5 +39,5 @@ yarn start
 ```
 
 Application then runs in ```http://localhost:3000``` 
-and backend returns vehicles to count at ```http://localhost:4000/vehicles```
+and backend returns vehicles to count at ```http://localhost:4000/counters```
 
