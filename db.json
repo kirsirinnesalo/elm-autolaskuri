@@ -1,0 +1,7 @@
+{
+  "vehicles" : [
+    { "id": 1, "name": "Henkilöauto", "count": 0 },
+    { "id": 2, "name": "Kuorma-auto", "count": 0 },
+    { "id": 3, "name": "Mopo", "count": 0 }
+  ]
+}

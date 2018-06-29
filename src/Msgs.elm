@@ -1,8 +1,11 @@
 module Msgs exposing (..)
 
-import Models exposing (Vehicle)
+import Models exposing (Vehicle, VehicleId)
+import RemoteData exposing (WebData)
 
 type Msg =
-    Reset Vehicle
-    | Increment Vehicle
-    | Decrement Vehicle
+    OnFetchVehicles (WebData (List Vehicle))
+    | Reset VehicleId
+    | Increase VehicleId
+    | Decrease VehicleId
+

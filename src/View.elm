@@ -5,28 +5,48 @@ import Html.Events exposing (onClick)
 import Html.Attributes exposing (class, style)
 import Msgs exposing (..)
 import Models exposing (Model, Vehicle)
-
+import RemoteData exposing (WebData)
 
 view : Model -> Html Msg
 view model =
-    div [ class "page", style [ ("margin", "auto"), ("display", "inline-block") ] ]
-        [ h1 [ style [ ("text-align", "center") ] ] [ text "Autolaskuri" ]
-        , span []
-            [ list model.vehicles
-            ]
+    div [ class "main" ]
+        [
+        h1 [] [ text "Autolaskuri" ]
+        , viewCounters model.vehicles
+        , div [ class "footer" ] [ text "2018 © Kirsi Rinnesalo" ]
         ]
+
+viewCounters : WebData (List Vehicle) -> Html Msg
+viewCounters response =
+    maybeList response
+
+maybeList : WebData (List Vehicle) -> Html Msg
+maybeList response =
+    case response of
+        RemoteData.NotAsked ->
+            text ""
+
+        RemoteData.Loading ->
+            text "Ladataan"
+
+        RemoteData.Success vehicles ->
+            list vehicles
+
+        RemoteData.Failure error ->
+            text (toString error)
 
 list : List Vehicle -> Html Msg
 list vehicles =
-    div [] (List.map viewVehicle vehicles)
+    div [ class "counters" ]
+        (List.map viewVehicle vehicles)
 
 viewVehicle : Vehicle -> Html Msg
 viewVehicle vehicle =
-    fieldset [ class "laskuri", style [ ("text-align", "center"), ("display", "inline-block") ] ]
+    fieldset [ class "counter" ]
     [ legend [] [ text vehicle.name ]
-    , span [ style [ ("padding", "1em") ] ] [ button [ onClick (Decrement vehicle) ] [ text "-" ] ]
+    , button [ onClick (Decrease vehicle.id) ] [ text "-" ]
     , text ( toString vehicle.count )
-    , span [ style [ ("padding", "1em") ] ] [ button [ onClick (Increment vehicle) ] [ text "+" ] ]
-    , div [ style [ ("padding", "1em") ] ] [ button [ onClick (Reset vehicle) ] [ text "Reset" ] ]
+    , button [ onClick (Increase vehicle.id) ] [ text "+" ]
+    , button [ class "reset", onClick (Reset vehicle.id) ] [ text "Reset" ]
     ]
 

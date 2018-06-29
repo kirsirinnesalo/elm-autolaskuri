@@ -1,20 +1,21 @@
 module Models exposing (..)
 
+import RemoteData exposing (WebData)
+
 type alias Model =
-    { vehicles : List Vehicle
+    { vehicles : WebData (List Vehicle)
     }
 
 initialModel : Model
 initialModel =
-    { vehicles = [
-        Vehicle 1 "Mopo" 0
-        , Vehicle 2 "Henkilöauto" 0
-        ]
+    { vehicles = RemoteData.Loading
     }
 
+type alias VehicleId =
+    Int
+
 type alias Vehicle =
-    { id: Int
+    { id: VehicleId
     , name: String
     , count: Int
     }
-

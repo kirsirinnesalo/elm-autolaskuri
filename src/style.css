@@ -1,0 +1,55 @@
+body {
+    background-color: floralwhite !important;
+    text-align: center;
+}
+
+.main {
+    position: relative;
+    margin: 2em auto;
+    padding: 0.3em 2em 2em 2em;
+    text-align: center;
+    background-color: peachpuff;
+    display: inline-block;
+    border-radius: 15px;
+    box-sizing: border-box;
+    border: 10px solid chocolate;
+}
+
+.counter {
+    display: inline-block;
+    text-align: center;
+    width: 200px;
+    border: 1px solid chocolate;
+    border-radius: 15px;
+}
+
+.counter legend { font-weight: bold; }
+
+.counter button:focus {
+    outline-color: chocolate;
+}
+
+.counter button:hover {
+    cursor: pointer;
+}
+
+.counter button {
+    margin: 1em;
+    background-color: lightsalmon;
+    padding: 1em;
+    border-radius: 5px;
+    border: 1px solid chocolate;
+}
+
+.counter button.reset {
+    display: inline-block;
+    padding: 0.3em !important;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
