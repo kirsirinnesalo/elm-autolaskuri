@@ -1,21 +1,27 @@
-module Msgs exposing (..)
+module Actions exposing (..)
 
 import Http exposing (Error)
-import Models exposing (Counter, CounterId)
+import Types exposing (Counter, CounterId)
 import RemoteData exposing (WebData)
+import Dom
 
-type Msg
+type Action
     = NoOp
     | OnFetchCounters (WebData (List Counter))
+
     | Reset CounterId
     | Increase Counter
     | Decrease Counter
-    | EnableEditing Counter
-    | EditName Counter String
     | SaveState
+
     | CreateCounter
     | CounterCreated (Result Http.Error Counter)
+
     | Delete CounterId
     | CounterDeleted (Result Http.Error String)
+
+    | EnableEditing Counter
+    | EditName Counter String
     | OnCounterSave (Result Http.Error Counter)
+    | EnterPressed
 

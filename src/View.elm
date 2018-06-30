@@ -1,16 +1,15 @@
 module View exposing (view)
 
-import Html exposing (Html, text, div, h1, button)
+import Html exposing (Html, text, div, h1)
 import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
-import Msgs exposing (..)
-import Models exposing (Model)
+import Actions exposing (Action)
+import Types exposing (Model)
 import Counters.View exposing (viewCounters)
 
-view : Model -> Html Msg
+view : Model -> Html Action
 view model =
     div [ class "main" ]
-        [ h1 [] [ text "Autolaskuri" ]
+        [ h1 [ class "caps" ] [ text "Autolaskuri" ]
         , viewCounters model.counters model
-        , div [ class "footer" ] [ text "2018 © Kirsi Rinnesalo" ]
+        , div [ class "footer" ] [ text "2018 © kirsirinnesalo" ]
         ]

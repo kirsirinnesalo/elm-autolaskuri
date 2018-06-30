@@ -1,40 +1,40 @@
 module Commands
     exposing
-        ( focusOnEditCounterCmd
-        , fetchCountersCmd
-        , saveCounterCmd
-        , createNewCounterCmd
-        , deleteCounterCmd
+        ( focusOnEditCounterCommand
+        , fetchCountersCommand
+        , saveCounterCommand
+        , createNewCounterCommand
+        , deleteCounterCommand
         )
 
 import Http
 import Json.Decode as Decode exposing (Decoder, list, string, int)
 import Json.Decode.Pipeline exposing (decode, required)
-import Msgs exposing (..)
-import Models exposing (Counter, CounterId)
-import RemoteData
+import Actions exposing (..)
+import Types exposing (Counter, CounterId, editedCounterNameId)
+import RemoteData exposing (sendRequest)
 import Json.Encode as Encode
-import Task exposing (Task)
-import Dom
+import Task exposing (attempt)
+import Dom exposing (focus, blur)
 
-
-focusOnEditCounterCmd : Cmd Msg
-focusOnEditCounterCmd =
-    Task.attempt (\_ -> NoOp) (Dom.focus "editCounterName")
-
-fetchCountersCmd : Cmd Msg
-fetchCountersCmd =
-    fetchApi
-        |> RemoteData.sendRequest
-        |> Cmd.map Msgs.OnFetchCounters
-
-fetchApi : Http.Request (List Counter)
-fetchApi =
-    Http.get apiUrl countersDecoder
 
 apiUrl : String
 apiUrl =
     "http://localhost:4000/counters"
+
+focusOnEditCounterCommand : Cmd Action
+focusOnEditCounterCommand =
+    Task.attempt (\_ -> NoOp) (Dom.focus "editCounterName")
+
+fetchCountersCommand : Cmd Action
+fetchCountersCommand =
+    fetchApi
+        |> RemoteData.sendRequest
+        |> Cmd.map OnFetchCounters
+
+fetchApi : Http.Request (List Counter)
+fetchApi =
+    Http.get apiUrl countersDecoder
 
 countersDecoder : Decoder (List Counter)
 countersDecoder =
@@ -47,10 +47,10 @@ counterDecoder =
         |> required "name" string
         |> required "count" int
 
-saveCounterCmd : Counter -> Cmd Msg
-saveCounterCmd counter =
+saveCounterCommand : Counter -> Cmd Action
+saveCounterCommand counter =
     saveCounterRequest counter
-        |> Http.send Msgs.OnCounterSave
+        |> Http.send OnCounterSave
 
 saveCounterUrl : CounterId -> String
 saveCounterUrl id =
@@ -79,8 +79,8 @@ counterEncoder counter =
     in
         Encode.object attributes
 
-createNewCounterCmd : Counter -> Cmd Msg
-createNewCounterCmd counter =
+createNewCounterCommand : Counter -> Cmd Action
+createNewCounterCommand counter =
     createCounterRequest counter
         |> Debug.log "counter created" Http.send CounterCreated
 
@@ -103,8 +103,8 @@ newCounterEncoder counter =
         , ( "count", Encode.int counter.count )
         ]
 
-deleteCounterCmd : CounterId -> Cmd Msg
-deleteCounterCmd counterId =
+deleteCounterCommand : CounterId -> Cmd Action
+deleteCounterCommand counterId =
     deleteCounterRequest counterId
         |> Http.send CounterDeleted
 
@@ -119,5 +119,4 @@ deleteCounterRequest counterId =
         , timeout = Nothing
         , withCredentials = False
         }
-
 

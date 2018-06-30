@@ -1,6 +1,6 @@
 # Autolaskuri
 
-_Autolaskuri_ is a Finnish word for car counter. It is a training project to 
+*Autolaskuri* is a Finnish word for car counter. It is a training project to 
 familiarize myself with Elm language.
 
 Idea is to count oncoming different vehicles: sedans, trucks, motorcycles, etc... 
@@ -39,12 +39,16 @@ node api.js
 
 ## Webpack
 
+[Elm Platform](http://elm-lang.org/install) contains interactive development tool 
+**Elm Reactor** which is easy to use webapp server for running Elm apps. 
+Just run ```elm-reactor``` and navigate to ```http://localhost:8000``` and look for *MainApp.elm*.
+
 With [Webpack](https://webpack.js.org/) we can get more support for JavaScript 
 and CSS handling. ```webpack.config.js``` and ```package.js``` defines the running 
 environment and finally I have used **Node Foreman** to run both backend and 
 frontend servers. Foreman is configured in ```Procfile```.
 
-Then running Autolaskuri is done by
+Then running *Autolaskuri* is done by
 ```
 yarn start
 ```

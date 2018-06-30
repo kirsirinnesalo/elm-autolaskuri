@@ -1,19 +1,23 @@
 module Update exposing (..)
 
-import Msgs exposing (..)
-import Models exposing (Model, Counter, CounterId, newCounter)
+import Html
+import Actions exposing (..)
+import Types exposing (Model, Counter, CounterId, newCounter, newCounterId, editedCounterNameId)
+import Dom exposing (blur)
+import Task exposing (attempt)
 import RemoteData exposing (map, WebData)
 import Commands
     exposing
-        ( focusOnEditCounterCmd
-        , fetchCountersCmd
-        , saveCounterCmd
-        , createNewCounterCmd
-        , deleteCounterCmd)
+        ( focusOnEditCounterCommand
+        , fetchCountersCommand
+        , saveCounterCommand
+        , createNewCounterCommand
+        , deleteCounterCommand
+        )
 
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
-    case msg of
+update : Action -> Model -> (Model, Cmd Action)
+update action model =
+    case action of
         NoOp ->
             ( model, Cmd.none )
 
@@ -41,8 +45,32 @@ update msg model =
             in
                 ( { model | counters = updatedCounters }, Cmd.none )
 
+        SaveState ->
+            ( model, Cmd.none )
+
+        CreateCounter ->
+            ( model, createNewCounterCommand (newCounter "Auto") )
+
+        CounterCreated (Ok counter) ->
+            ( toggleEditing
+                { model | counters = appendCounter counter model.counters }
+                counter
+            , focusOnEditCounterCommand
+            )
+
+        Delete id ->
+            let
+                filterIdFrom counters =
+                    List.filter (\counter -> counter.id /= id) counters
+            in
+                ( { model | counters = RemoteData.map filterIdFrom model.counters }
+                , deleteCounterCommand id)
+
+        CounterDeleted _ ->
+            (model, fetchCountersCommand)
+
         EnableEditing counter ->
-            ( toggleEditing model counter, focusOnEditCounterCmd )
+            ( toggleEditing model counter, focusOnEditCounterCommand )
 
         EditName counter newName ->
             let
@@ -51,42 +79,18 @@ update msg model =
                 toggledModel =
                     toggleEditing model counter
             in
-                if String.trim newName == "" then
+                if String.trim newName == "" || newName == counter.name then
                     ( toggledModel, Cmd.none )
                 else
-                    ( toggledModel, saveCounterCmd updatedCounter )
-
-        SaveState ->
-            ( model, Cmd.none )
-
-        CreateCounter ->
-            ( model, createNewCounterCmd (newCounter -1 "Auto") )
-
-        CounterCreated (Ok counter) ->
-            ( toggleEditing
-                { model | counters = appendCounter counter model.counters }
-                counter
-            , focusOnEditCounterCmd
-            )
-
-        CounterCreated (Err error) ->
-            ( model, Cmd.none )
-
-        Delete id ->
-            let
-                filterIdFrom counters =
-                    List.filter (\ counter -> counter.id /= id) counters
-            in
-                ( { model | counters = RemoteData.map filterIdFrom model.counters }
-                , deleteCounterCmd id)
-
-        CounterDeleted _ ->
-            (model, fetchCountersCmd)
+                    ( toggledModel, saveCounterCommand updatedCounter )
 
         OnCounterSave (Ok counter) ->
             ( saveCounter model counter, Cmd.none )
 
-        OnCounterSave (Err error) ->
+        EnterPressed ->
+            ( model, blur editedCounterNameId |> Task.attempt (\_ -> NoOp) )
+
+        _ ->
             ( model, Cmd.none )
 
 

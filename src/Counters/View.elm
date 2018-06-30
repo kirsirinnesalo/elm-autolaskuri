@@ -1,25 +1,26 @@
 module Counters.View exposing (..)
 
 import Html exposing (Html, Attribute, div, fieldset, legend, button, text, span, input)
-import Html.Events exposing (onClick, on, targetValue)
+import Html.Events exposing (onClick, on, targetValue, keyCode, onWithOptions, defaultOptions)
 import Html.Attributes exposing (class, placeholder, id)
-import Models exposing (Model, CounterId, Counter)
-import Msgs exposing (..)
+import Types exposing (Model, CounterId, Counter, editedCounterNameId)
+import Actions exposing (..)
 import RemoteData exposing (WebData)
 import Json.Decode as Json
 
-viewCounters : WebData (List Counter) -> Model -> Html Msg
+
+viewCounters : WebData (List Counter) -> Model -> Html Action
 viewCounters response model =
     maybeList response model
 
-maybeList : WebData (List Counter) -> Model -> Html Msg
+maybeList : WebData (List Counter) -> Model -> Html Action
 maybeList response model =
     case response of
         RemoteData.NotAsked ->
             text ""
 
         RemoteData.Loading ->
-            text "Ladataan"
+            text "Ladataan..."
 
         RemoteData.Success counters ->
             list counters model
@@ -27,7 +28,7 @@ maybeList response model =
         RemoteData.Failure error ->
             text (toString error)
 
-list : List Counter -> Model -> Html Msg
+list : List Counter -> Model -> Html Action
 list counters model =
     div [ class "counters" ]
         ( List.append
@@ -39,7 +40,7 @@ list counters model =
             ]
         )
 
-viewCounter : CounterId -> Counter -> Html Msg
+viewCounter : CounterId -> Counter -> Html Action
 viewCounter editCounterId counter =
     fieldset [ class "counter" ]
     [ legend []
@@ -48,7 +49,8 @@ viewCounter editCounterId counter =
             input
                 [ placeholder ( counter.name )
                 , onBlurWithValue ( EditName counter )
-                , id "editCounterName"
+                , onEnter EnterPressed
+                , id editedCounterNameId
                 ]
                 []
         else
@@ -62,7 +64,19 @@ viewCounter editCounterId counter =
     , button [ class "delete", onClick (Delete counter.id) ] [ text "x" ]
     ]
 
-onBlurWithValue : (String -> Msg) -> Attribute Msg
-onBlurWithValue value =
-    on "blur" (Json.map value targetValue)
+onBlurWithValue : (String -> Action) -> Attribute Action
+onBlurWithValue tagger =
+    on "blur" (Json.map tagger targetValue)
 
+onEnter : Action -> Attribute Action
+onEnter tagger =
+    let
+        options = { defaultOptions | preventDefault = True }
+        isEnter code =
+            if code == 13
+                then Json.succeed tagger
+                else Json.fail "ignored input"
+        decodeEnter =
+            Json.andThen isEnter keyCode
+    in
+        onWithOptions "keydown" options decodeEnter
