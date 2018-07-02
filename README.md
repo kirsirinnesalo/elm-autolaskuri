@@ -13,6 +13,16 @@ Idea is to count oncoming different vehicles: sedans, trucks, motorcycles, etc..
 - [ ] rearranging counters, drag and drop; see [elm-draggable](http://package.elm-lang.org/packages/zaboco/elm-draggable/latest)
 - [ ] login and user-specific counters
 
+## Running
+
+```
+yarn install
+yarn start
+```
+
+Head to ```http://localhost:3000``` and start counting cars :)
+
+
 ## Backend
 
 I've followed [Elm tutorial](https://www.elm-tutorial.org/) instructions to create 
