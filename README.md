@@ -10,6 +10,7 @@ Idea is to count oncoming different vehicles: sedans, trucks, motorcycles, etc..
   - [x] enter saves edit
   - [ ] esc reverts edit
 - [x] save state
+  - [ ] show modification state
 - [ ] rearranging counters, drag and drop; see [elm-draggable](http://package.elm-lang.org/packages/zaboco/elm-draggable/latest)
 - [ ] login and user-specific counters
 
@@ -20,8 +21,9 @@ yarn install
 yarn start
 ```
 
-Head to ```http://localhost:3000``` and start counting cars :)
+Open ```http://localhost:3000``` in your browser and start counting cars :)
 
+<a href="screenshot.png"><img alt="Screenshot" src="screenshot.png" width="600" /></a>
 
 ## Backend
 
