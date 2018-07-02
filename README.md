@@ -50,7 +50,7 @@ Just run ```elm-reactor``` and navigate to ```http://localhost:8000``` and look 
 
 With [Webpack](https://webpack.js.org/) we can get more support for JavaScript 
 and CSS handling. ```webpack.config.js``` and ```package.js``` defines the running 
-environment and finally I have used **Node Foreman** to run both backend and 
+environment and finally I have used [Node Foreman](https://github.com/strongloop/node-foreman) to run both backend and 
 frontend servers. Foreman is configured in ```Procfile```.
 
 Then running *Autolaskuri* is done by
