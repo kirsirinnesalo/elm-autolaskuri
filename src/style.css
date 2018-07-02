@@ -1,3 +1,4 @@
+
 body {
     background-color: floralwhite !important;
     text-align: center;
@@ -5,8 +6,8 @@ body {
 
 .main {
     position: relative;
-    margin: 2em auto;
-    padding: 0.3em 2em 2em 2em;
+    margin: 20px auto;
+    padding: 0 20px 50px 20px;
     text-align: center;
     background-color: peachpuff;
     display: inline-block;
@@ -28,7 +29,7 @@ body {
     border: 1px solid chocolate;
     border-radius: 15px;
     position: relative;
-    margin: 1em;
+    margin: 10px;
 }
 
 .counter legend { font-weight: bold; }
@@ -64,7 +65,7 @@ fieldset.add-new-counter legend {
 }
 
 .counter button.count {
-    margin: 1em;
+    margin: 15px;
     width: 40px;
     height: 40px;
     font-size: large;
@@ -72,8 +73,8 @@ fieldset.add-new-counter legend {
 
 .counter button.reset {
     display: inline-block;
-    padding: 0.3em;
-    margin: 1em 1em 0 1em;
+    padding: 5px;
+    margin: 15px 10px 0 10px;
     width: 50%;
 }
 
@@ -85,7 +86,7 @@ fieldset.add-new-counter legend {
     border-radius: 5px;
     border: 1px solid chocolate;
     display: block;
-    padding: 0.1em 0.3em;
+    padding: 3px 5px;
     font-weight: bold;
 }
 
@@ -102,6 +103,7 @@ fieldset.add-new-counter legend {
     right: 0;
     bottom: 0;
     margin: 3px;
-    padding: 0.3em;
+    padding: 5px;
     width: 100px;
 }
+
