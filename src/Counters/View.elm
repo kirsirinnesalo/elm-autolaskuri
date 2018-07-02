@@ -1,4 +1,4 @@
-module Counters.View exposing (..)
+module Counters.View exposing ( viewCounters )
 
 import Html exposing (Html, Attribute, div, fieldset, legend, button, text, span, input)
 import Html.Events exposing (onClick, on, targetValue, keyCode, onWithOptions, defaultOptions)
@@ -11,10 +11,10 @@ import Json.Decode as Json
 
 viewCounters : WebData (List Counter) -> Model -> Html Action
 viewCounters response model =
-    maybeList response model
+    asHtml response model
 
-maybeList : WebData (List Counter) -> Model -> Html Action
-maybeList response model =
+asHtml : WebData (List Counter) -> Model -> Html Action
+asHtml response model =
     case response of
         RemoteData.NotAsked ->
             text ""
@@ -30,22 +30,26 @@ maybeList response model =
 
 list : List Counter -> Model -> Html Action
 list counters model =
-    div [ class "counters" ]
-        ( List.append
-            (List.map (viewCounter model.editCounterId) counters)
-            [ fieldset [ class "counter add-new-counter" ]
-                [ legend [] [ text "Lisää uusi" ]
-                , button [ onClick CreateCounter ] [ text "+" ]
+    let
+        isOnEdit counterId =
+            model.editCounterId == counterId
+    in
+        div [ class "counters" ]
+            ( List.append
+                (List.map (\counter -> viewCounter counter (isOnEdit counter.id)) counters)
+                [ fieldset [ class "counter add-new-counter" ]
+                    [ legend [] [ text "Lisää uusi" ]
+                    , button [ onClick CreateCounter ] [ text "+" ]
+                    ]
                 ]
-            ]
-        )
+            )
 
-viewCounter : CounterId -> Counter -> Html Action
-viewCounter editCounterId counter =
+viewCounter : Counter -> Bool -> Html Action
+viewCounter counter isOnEdit =
     fieldset [ class "counter" ]
     [ legend []
         [
-        if editCounterId == counter.id then
+        if isOnEdit then
             input
                 [ placeholder ( counter.name )
                 , onBlurWithValue ( EditName counter )

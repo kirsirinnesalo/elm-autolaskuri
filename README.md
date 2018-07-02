@@ -5,8 +5,13 @@ familiarize myself with Elm language.
 
 Idea is to count oncoming different vehicles: sedans, trucks, motorcycles, etc... 
 
-* counter cannot get negative
-* editing counters (add, remove, change name)
+- [x] counter cannot get negative
+- [x] editing counters (add, remove, change name)
+  - [x] enter saves edit
+  - [ ] esc reverts edit
+- [x] save state
+- [ ] rearranging counters, drag and drop; see [elm-draggable](http://package.elm-lang.org/packages/zaboco/elm-draggable/latest)
+- [ ] login and user-specific counters
 
 ## Backend
 

@@ -1,6 +1,5 @@
 module Update exposing (..)
 
-import Html
 import Actions exposing (..)
 import Types exposing (Model, Counter, CounterId, newCounter, newCounterId, editedCounterNameId)
 import Dom exposing (blur)
@@ -13,6 +12,7 @@ import Commands
         , saveCounterCommand
         , createNewCounterCommand
         , deleteCounterCommand
+        , saveAllCommand
         )
 
 update : Action -> Model -> (Model, Cmd Action)
@@ -34,19 +34,16 @@ update action model =
         Increase counter ->
             let
                 updatedCounters =
-                    updateCount counter.id (inc counter 1) model
+                    updateCount counter.id (plus1 counter) model
             in
                 ( { model | counters = updatedCounters }, Cmd.none )
 
         Decrease counter ->
             let
                 updatedCounters =
-                    updateCount counter.id (inc counter -1) model
+                    updateCount counter.id (minus1 counter) model
             in
                 ( { model | counters = updatedCounters }, Cmd.none )
-
-        SaveState ->
-            ( model, Cmd.none )
 
         CreateCounter ->
             ( model, createNewCounterCommand (newCounter "Auto") )
@@ -84,11 +81,20 @@ update action model =
                 else
                     ( toggledModel, saveCounterCommand updatedCounter )
 
-        OnCounterSave (Ok counter) ->
-            ( saveCounter model counter, Cmd.none )
+        CounterSaved (Ok counter) ->
+            ( updateViewedCounter model (Debug.log "counter saved" counter), Cmd.none )
 
         EnterPressed ->
             ( model, blur editedCounterNameId |> Task.attempt (\_ -> NoOp) )
+
+        SaveAll ->
+            ( model, saveAllCommand (asList model.counters) )
+
+        AllSaved (Ok counterList) ->
+            let
+                _ = Debug.log "counters saved" counterList
+            in
+                ( model, fetchCountersCommand )
 
         _ ->
             ( model, Cmd.none )
@@ -108,6 +114,14 @@ inc counter amount =
     else
         counter.count + amount
 
+minus1 : Counter -> Int
+minus1 counter =
+    inc counter -1
+
+plus1 : Counter -> Int
+plus1 counter =
+    inc counter 1
+
 updateCount : CounterId -> Int -> Model -> WebData (List Counter)
 updateCount id newValue model =
     let
@@ -125,8 +139,8 @@ updateCount id newValue model =
     in
         RemoteData.map updateCounters model.counters
 
-saveCounter : Model -> Counter -> Model
-saveCounter model counter =
+updateViewedCounter : Model -> Counter -> Model
+updateViewedCounter model counter =
     let
         pick current =
             if counter.id == current.id then
@@ -145,10 +159,19 @@ saveCounter model counter =
 appendCounter : Counter -> WebData (List Counter) -> WebData (List Counter)
 appendCounter newCounter counters =
     let
-        appendCounter : List Counter -> List Counter
         appendCounter listOfCounters =
             List.append listOfCounters [ newCounter ]
     in
         RemoteData.map appendCounter counters
 
-
+asList : WebData (List Counter) -> List Counter
+asList response =
+    case response of
+        RemoteData.NotAsked
+            -> []
+        RemoteData.Loading
+            -> []
+        RemoteData.Failure _
+            -> []
+        RemoteData.Success counterList
+            -> counterList

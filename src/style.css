@@ -13,7 +13,7 @@ body {
     border-radius: 15px;
     box-sizing: border-box;
     border: 10px solid chocolate;
-    max-width: 800px;
+    max-width: 780px;
 }
 
 .counters {
@@ -74,6 +74,7 @@ fieldset.add-new-counter legend {
     display: inline-block;
     padding: 0.3em;
     margin: 1em 1em 0 1em;
+    width: 50%;
 }
 
 .counter button.delete {
@@ -96,3 +97,11 @@ fieldset.add-new-counter legend {
     text-align: center;
 }
 
+.footer button.save {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 3px;
+    padding: 0.3em;
+    width: 100px;
+}

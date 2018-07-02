@@ -3,7 +3,6 @@ module Actions exposing (..)
 import Http exposing (Error)
 import Types exposing (Counter, CounterId)
 import RemoteData exposing (WebData)
-import Dom
 
 type Action
     = NoOp
@@ -12,7 +11,6 @@ type Action
     | Reset CounterId
     | Increase Counter
     | Decrease Counter
-    | SaveState
 
     | CreateCounter
     | CounterCreated (Result Http.Error Counter)
@@ -22,6 +20,9 @@ type Action
 
     | EnableEditing Counter
     | EditName Counter String
-    | OnCounterSave (Result Http.Error Counter)
+    | CounterSaved (Result Http.Error Counter)
     | EnterPressed
+
+    | SaveAll
+    | AllSaved (Result Http.Error (List Counter))
 
