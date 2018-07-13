@@ -9,14 +9,15 @@ module Commands
         )
 
 import Http
-import Json.Decode as Decode exposing (Decoder, list, string, int)
-import Json.Decode.Pipeline exposing (decode, required)
-import Actions exposing (..)
-import Types exposing (Model, Counter, CounterId, editedCounterNameId)
-import RemoteData exposing (sendRequest, WebData, toMaybe, fromList, RemoteData)
+import Json.Decode exposing (Decoder, list, string, int)
+import Json.Decode.Pipeline exposing (decode, required, optional)
+import RemoteData exposing (sendRequest)
 import Json.Encode as Encode
-import Task exposing (attempt)
-import Dom exposing (focus, blur)
+import Task
+import Dom exposing (focus)
+
+import Actions exposing (..)
+import Types exposing (Counter, CounterId)
 
 
 apiUrl : String
@@ -39,7 +40,7 @@ fetchCountersCommand =
 
 fetchCounters : Http.Request (List Counter)
 fetchCounters =
-    Http.get apiUrl countersDecoder
+    Http.get (apiUrl ++ "?_sort=ordno") countersDecoder
 
 countersDecoder : Decoder (List Counter)
 countersDecoder =
@@ -51,6 +52,7 @@ counterDecoder =
         |> required "id" int
         |> required "name" string
         |> required "count" int
+        |> optional "ordno" int 0
 
 saveCounterCommand : Counter -> Cmd Action
 saveCounterCommand counter =
@@ -76,6 +78,7 @@ counterEncoder counter =
             [ ( "id", Encode.int counter.id )
             , ( "name", Encode.string counter.name )
             , ( "count", Encode.int counter.count )
+            , ( "ordno", Encode.int counter.ordno )
             ]
     in
         Encode.object attributes
@@ -104,17 +107,17 @@ newCounterEncoder counter =
         , ( "count", Encode.int counter.count )
         ]
 
-deleteCounterCommand : CounterId -> Cmd Action
-deleteCounterCommand counterId =
-    deleteCounterRequest (Debug.log "counter deleted" counterId)
+deleteCounterCommand : Counter -> Cmd Action
+deleteCounterCommand counter =
+    deleteCounterRequest (Debug.log "counter deleted" counter)
         |> Http.send CounterDeleted
 
-deleteCounterRequest : CounterId -> Http.Request String
-deleteCounterRequest counterId =
+deleteCounterRequest : Counter -> Http.Request String
+deleteCounterRequest counter =
     Http.request
         { method = "DELETE"
         , headers = []
-        , url = apiUrlForCounter counterId
+        , url = apiUrlForCounter counter.id
         , body = Http.emptyBody
         , expect = Http.expectString
         , timeout = Nothing
@@ -124,15 +127,19 @@ deleteCounterRequest counterId =
 saveAllCommand : List Counter -> Cmd Action
 saveAllCommand counters =
     let
+        _ = Debug.log "saving all counters" counters
+
+        counterTasks =
+            List.map Task.succeed counters
+
         saveCounter counter =
             saveCounterRequest ( Debug.log "saving counter" counter )
                 |> Http.toTask
-        countersAsTasks counters =
-            List.map Task.succeed counters
-        saveCounters counters =
-            List.map ( Task.andThen saveCounter ) (countersAsTasks counters)
+
+        saveCounters =
+            List.map ( Task.andThen saveCounter ) counterTasks
     in
-        saveCounters (Debug.log "saving all counters" counters)
+        saveCounters
             |> Task.sequence
             |> Task.attempt AllSaved
 

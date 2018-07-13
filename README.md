@@ -11,7 +11,7 @@ Idea is to count oncoming different vehicles: sedans, trucks, motorcycles, etc..
   - [ ] esc reverts edit
 - [x] save state
   - [ ] show modification state
-- [ ] rearranging counters, drag and drop; see [elm-draggable](http://package.elm-lang.org/packages/zaboco/elm-draggable/latest)
+- [x] rearranging counters, drag and drop
 - [ ] login and user-specific counters
 
 ## Running

@@ -1,4 +1,5 @@
 import Html exposing (program)
+
 import Actions exposing (Action)
 import Commands exposing (fetchCountersCommand)
 import Types exposing (Model, initialModel)

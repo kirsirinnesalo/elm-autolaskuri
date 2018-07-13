@@ -1,10 +1,12 @@
 module Update exposing (..)
 
-import Actions exposing (..)
-import Types exposing (Model, Counter, CounterId, newCounter, newCounterId, editedCounterNameId)
 import Dom exposing (blur)
 import Task exposing (attempt)
 import RemoteData exposing (map, WebData)
+import List exposing (take, drop)
+
+import Actions exposing (..)
+import Types exposing (Model, Counter, CounterId, newCounter, editingCounterNameId)
 import Commands
     exposing
         ( focusOnEditCounterCommand
@@ -14,69 +16,83 @@ import Commands
         , deleteCounterCommand
         , saveAllCommand
         )
+import Utils
 
 update : Action -> Model -> (Model, Cmd Action)
 update action model =
-    case action of
-        NoOp ->
-            ( model, Cmd.none )
-
+    case Debug.log "got action" action of
         OnFetchCounters response ->
             ( { model | counters = response }, Cmd.none )
 
-        Reset id ->
+        Reset counter ->
             let
                 updatedCounters =
-                    updateCount id 0 model
+                    updateCounterTo 0 counter.id model
             in
                 ( { model | counters = updatedCounters }, Cmd.none )
 
         Increase counter ->
             let
+                plus1 counter =
+                    inc counter 1
+
                 updatedCounters =
-                    updateCount counter.id (plus1 counter) model
+                    updateCounterTo (plus1 counter) counter.id model
             in
                 ( { model | counters = updatedCounters }, Cmd.none )
 
         Decrease counter ->
             let
+                minus1 counter =
+                    inc counter -1
+
                 updatedCounters =
-                    updateCount counter.id (minus1 counter) model
+                    updateCounterTo (minus1 counter) counter.id model
             in
                 ( { model | counters = updatedCounters }, Cmd.none )
 
         CreateCounter ->
             ( model, createNewCounterCommand (newCounter "Auto") )
 
-        CounterCreated (Ok counter) ->
-            ( toggleEditing
-                { model | counters = appendCounter counter model.counters }
-                counter
-            , focusOnEditCounterCommand
-            )
-
-        Delete id ->
+        CounterCreated (Ok newCounter) ->
             let
-                filterIdFrom counters =
-                    List.filter (\counter -> counter.id /= id) counters
+                list_ =
+                    Utils.asList model.counters
             in
-                ( { model | counters = RemoteData.map filterIdFrom model.counters }
-                , deleteCounterCommand id)
+                ( toggleEditing
+                    newCounter
+                    { model | counters = (appendAsLast newCounter model.counters) }
+                , focusOnEditCounterCommand
+                )
+
+        Delete counter ->
+            let
+                list_ =
+                    Utils.asList model.counters
+
+                counters_ =
+                    Utils.filterIdFrom counter.id list_
+            in
+                ( { model | counters = RemoteData.succeed counters_ }, deleteCounterCommand counter)
 
         CounterDeleted _ ->
             (model, fetchCountersCommand)
 
-        EnableEditing counter ->
-            ( toggleEditing model counter, focusOnEditCounterCommand )
+        EnableNameEditing counter ->
+            ( toggleEditing counter model, focusOnEditCounterCommand )
 
-        EditName counter newName ->
+        ChangeName counter newName ->
             let
+                newNameIsEmpty =
+                    String.isEmpty <| String.trim newName
+
                 updatedCounter =
                     { counter | name = newName }
+
                 toggledModel =
-                    toggleEditing model counter
+                    toggleEditing counter model
             in
-                if String.trim newName == "" || newName == counter.name then
+                if newNameIsEmpty || newName == counter.name then
                     ( toggledModel, Cmd.none )
                 else
                     ( toggledModel, saveCounterCommand updatedCounter )
@@ -85,10 +101,10 @@ update action model =
             ( updateViewedCounter model (Debug.log "counter saved" counter), Cmd.none )
 
         EnterPressed ->
-            ( model, blur editedCounterNameId |> Task.attempt (\_ -> NoOp) )
+            ( model, blur editingCounterNameId |> Task.attempt (\_ -> NoOp) )
 
         SaveAll ->
-            ( model, saveAllCommand (asList model.counters) )
+            ( model, saveAllCommand (Utils.asList model.counters) )
 
         AllSaved (Ok counterList) ->
             let
@@ -96,41 +112,62 @@ update action model =
             in
                 ( model, fetchCountersCommand )
 
+        Move counter ->
+            ( { model | movingCounter = Just counter }, Cmd.none )
+
+        DropOn counter ->
+            let
+                model_ =
+                    { model
+                        | counters =
+                            updatedCounterListOnDrop counter model
+                            |> RemoteData.Success
+                        , movingCounter = Nothing
+                    }
+            in
+                ( Debug.log "new model after drop" model_, saveAllCommand (Utils.asList model_.counters))
+
         _ ->
             ( model, Cmd.none )
 
-
-toggleEditing : Model -> Counter -> Model
-toggleEditing model counter =
-    if model.editCounterId == counter.id then
-        { model | editCounterId = -1 }
-    else
-        { model | editCounterId = counter.id }
+toggleEditing : Counter -> Model -> Model
+toggleEditing counter model =
+    let
+        toggledId =
+            case model.editId of
+                Nothing ->
+                    Just counter.id
+                Just editId ->
+                    if editId == counter.id then
+                        Nothing
+                    else
+                        Just counter.id
+    in
+        { model | editId = toggledId}
 
 inc : Counter -> Int -> Int
 inc counter amount =
-    if amount < 0 && counter.count + amount < 0 then
-        0
-    else
-        counter.count + amount
-
-minus1 : Counter -> Int
-minus1 counter =
-    inc counter -1
-
-plus1 : Counter -> Int
-plus1 counter =
-    inc counter 1
-
-updateCount : CounterId -> Int -> Model -> WebData (List Counter)
-updateCount id newValue model =
     let
+        counterGetsNegative =
+            amount < 0 && counter.count + amount < 0
+    in
+        if counterGetsNegative then
+            0
+        else
+            counter.count + amount
+
+updateCounterTo : Int -> CounterId -> Model -> WebData (List Counter)
+updateCounterTo newValue counterId model =
+    let
+        updateCountTo newValue counter =
+            if newValue < 0 then
+                { counter | count = 0}
+            else
+                { counter | count = newValue }
+
         updateCounter counter =
-            if counter.id == id then
-                if newValue < 0 then
-                    { counter | count = 0}
-                else
-                    { counter | count = newValue }
+            if counter.id == counterId then
+                updateCountTo newValue counter
             else
                 counter
 
@@ -156,22 +193,49 @@ updateViewedCounter model counter =
     in
         { model | counters = updatedCounters }
 
-appendCounter : Counter -> WebData (List Counter) -> WebData (List Counter)
-appendCounter newCounter counters =
+appendAsLast : Counter -> WebData (List Counter) -> WebData (List Counter)
+appendAsLast newCounter counters =
     let
-        appendCounter listOfCounters =
-            List.append listOfCounters [ newCounter ]
-    in
-        RemoteData.map appendCounter counters
+        counters_ =
+            Utils.asList counters
 
-asList : WebData (List Counter) -> List Counter
-asList response =
-    case response of
-        RemoteData.NotAsked
-            -> []
-        RemoteData.Loading
-            -> []
-        RemoteData.Failure _
-            -> []
-        RemoteData.Success counterList
-            -> counterList
+        appendCounter listOfCounters =
+            List.append listOfCounters [ { newCounter | ordno = List.length counters_ } ]
+    in
+        appendCounter counters_ |> RemoteData.Success
+
+updatedCounterListOnDrop : Counter -> Model -> List Counter
+updatedCounterListOnDrop onCounter model =
+    let
+        movingCounter_ =
+            case model.movingCounter of
+                Nothing             -> onCounter
+                Just movingCounter  -> movingCounter
+
+        fromIndex =
+            Utils.indexOf movingCounter_ (Utils.asList model.counters)
+
+        list_ =
+            Utils.asList model.counters
+                |> Utils.filterIdFrom movingCounter_.id
+
+        dropOnIndex =
+            Utils.indexOf onCounter list_
+
+        x =
+            if fromIndex > dropOnIndex
+                then dropOnIndex
+                else dropOnIndex + 1
+
+        fixOrdno (index, counter) =
+            { counter | ordno = index + 1 }
+
+        fixOrdnos list =
+            List.indexedMap (\i c -> fixOrdno (i, c)) list
+    in
+        (++)
+            ( take x list_ )
+            ( movingCounter_
+                :: ( drop x list_ )
+            )
+        |> fixOrdnos

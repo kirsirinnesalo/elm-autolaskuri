@@ -1,13 +1,14 @@
 module Counters.View exposing ( viewCounters )
 
 import Html exposing (Html, Attribute, div, fieldset, legend, button, text, span, input)
-import Html.Events exposing (onClick, on, targetValue, keyCode, onWithOptions, defaultOptions)
-import Html.Attributes exposing (class, placeholder, id)
-import Types exposing (Model, CounterId, Counter, editedCounterNameId)
-import Actions exposing (..)
+import Html.Events exposing (onClick, on, targetValue, keyCode, onWithOptions, defaultOptions, Options)
+import Html.Attributes exposing (class, placeholder, id, style, attribute)
 import RemoteData exposing (WebData)
 import Json.Decode as Json
 
+import Types exposing (Model, Counter, editingCounterNameId)
+import Actions exposing (..)
+import Utils exposing ((=>))
 
 viewCounters : WebData (List Counter) -> Model -> Html Action
 viewCounters response model =
@@ -31,12 +32,19 @@ asHtml response model =
 list : List Counter -> Model -> Html Action
 list counters model =
     let
-        isOnEdit counterId =
-            model.editCounterId == counterId
+        view counter =
+            let
+                isOnEdit =
+                    case model.editId of
+                        Nothing -> False
+                        Just editId ->
+                            editId == counter.id
+            in
+                viewCounter counter isOnEdit
     in
         div [ class "counters" ]
             ( List.append
-                (List.map (\counter -> viewCounter counter (isOnEdit counter.id)) counters)
+                (List.map view counters)
                 [ fieldset [ class "counter add-new-counter" ]
                     [ legend [] [ text "Lisää uusi" ]
                     , button [ onClick CreateCounter ] [ text "+" ]
@@ -46,27 +54,37 @@ list counters model =
 
 viewCounter : Counter -> Bool -> Html Action
 viewCounter counter isOnEdit =
-    fieldset [ class "counter" ]
-    [ legend []
-        [
-        if isOnEdit then
-            input
-                [ placeholder ( counter.name )
-                , onBlurWithValue ( EditName counter )
-                , onEnter EnterPressed
-                , id editedCounterNameId
-                ]
-                []
-        else
-            span [ onClick (EnableEditing counter)]
-                [ text counter.name ]
+    fieldset
+        [ class "counter"
+        , attribute "draggable" "true"
+        , attribute "ondragover" "return false"
+        , onDragStart (Move counter)
+        , onDrop <| DropOn counter
+        , style
+            [ "cursor" => "move"
+            ]
         ]
-    , button [ class "count", onClick (Decrease counter) ] [ text "-" ]
-    , text ( toString counter.count )
-    , button [ class "count", onClick (Increase counter) ] [ text "+" ]
-    , button [ class "reset", onClick (Reset counter.id) ] [ text "Nollaa" ]
-    , button [ class "delete", onClick (Delete counter.id) ] [ text "x" ]
-    ]
+        [ legend []
+            [
+            if isOnEdit then
+                input
+                    [ placeholder ( counter.name )
+                    , onBlurWithValue ( ChangeName counter )
+                    , onEnter EnterPressed
+                    , onDrop (DropOn counter)
+                    , id editingCounterNameId
+                    ]
+                    []
+            else
+                span [ onClick (EnableNameEditing counter)]
+                    [ text counter.name ]
+            ]
+        , button [ class "count", onClick (Decrease counter) ] [ text "-" ]
+        , text ( toString counter.count )
+        , button [ class "count", onClick (Increase counter) ] [ text "+" ]
+        , button [ class "reset", onClick (Reset counter) ] [ text "Nollaa" ]
+        , button [ class "delete", onClick (Delete counter) ] [ text "x" ]
+        ]
 
 onBlurWithValue : (String -> Action) -> Attribute Action
 onBlurWithValue tagger =
@@ -84,3 +102,18 @@ onEnter tagger =
             Json.andThen isEnter keyCode
     in
         onWithOptions "keydown" options decodeEnter
+
+onDragStart : msg -> Attribute msg
+onDragStart msg =
+    on "dragstart" (Json.succeed msg)
+
+onDrop : msg -> Attribute msg
+onDrop msg =
+    onWithOptions
+        "drop"
+        preventDefaultAndStopPropagation
+        (Json.succeed msg)
+
+preventDefaultAndStopPropagation : Options
+preventDefaultAndStopPropagation =
+    Options True True
